@@ -47,6 +47,19 @@ they are created, and right before they are deleted.
 
 -  `core/os/memory.h <https://github.com/godotengine/godot/blob/master/core/os/memory.h>`__
 
+.. admonition:: Engine context
+   :class: devin-context
+
+   The ``memnew`` / ``memdelete`` macros are defined in
+   `core/os/memory.h <https://github.com/HathawayJA/godevin/blob/master/core/os/memory.h>`__.
+   Under the hood, ``memnew`` calls the overloaded placement ``new`` operator and
+   then invokes ``postinitialize()`` on ``Object``-derived classes, which is where
+   ``_init()`` and notification dispatch happen. ``memdelete`` calls
+   ``predelete()`` first so the instance can clean up before destruction.
+   All allocations are tracked by an internal memory counter that you can query
+   with ``Memory::get_mem_usage()`` — this is what powers the memory profiler in
+   the editor debugger.
+
 Containers
 ----------
 
@@ -241,3 +254,15 @@ accessed directly. RIDs are unique, even for different types of
 referenced data:
 
 -  `core/templates/rid.h <https://github.com/godotengine/godot/blob/master/core/templates/rid.h>`__
+
+.. admonition:: Engine context
+   :class: devin-context
+
+   An ``RID`` is internally a 64-bit integer index into an ``RID_Owner``
+   allocation table (see
+   `core/templates/rid_owner.h <https://github.com/HathawayJA/godevin/blob/master/core/templates/rid_owner.h>`__).
+   ``RID_Owner`` uses a paged allocator so that creating and freeing
+   resources avoids fragmentation. Because the scene layer only holds RIDs
+   rather than direct pointers, the server thread can relocate or
+   reorganize its internal data freely — this is the key design that
+   enables Godot's multi-threaded server architecture.

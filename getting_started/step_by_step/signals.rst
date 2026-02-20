@@ -37,6 +37,18 @@ what you can do with the Signal type directly.
     observer pattern. You can learn more about it in
     `Game Programming Patterns <https://gameprogrammingpatterns.com/observer.html>`__.
 
+.. admonition:: Engine context
+   :class: devin-context
+
+   The signal and connection machinery is defined on the ``Object`` class in
+   `core/object/object.cpp <https://github.com/HathawayJA/godevin/blob/master/core/object/object.cpp>`__.
+   Each ``Object`` maintains a map of signal names to ``SignalData`` structs, which
+   hold a list of ``Connection`` entries. Calling ``emit_signal()`` walks this list
+   and invokes each connected ``Callable``. Deferred connections queue the call on
+   the ``MessageQueue``
+   (`core/object/message_queue.cpp <https://github.com/HathawayJA/godevin/blob/master/core/object/message_queue.cpp>`__)
+   so the receiver runs on the main thread during the next idle step.
+
 We will now use a signal to make our Godot icon from the previous lesson
 (:ref:`doc_scripting_player_input`) move and stop by pressing a button.
 

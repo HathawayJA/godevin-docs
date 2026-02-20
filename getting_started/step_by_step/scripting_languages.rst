@@ -82,6 +82,18 @@ GDScript looks like Python as you structure your code blocks using indentations,
 but it doesn't work the same way in practice. It's inspired by multiple
 languages, including Squirrel, Lua, and Python.
 
+.. admonition:: Engine context
+   :class: devin-context
+
+   The GDScript compiler and runtime live in
+   `/modules/gdscript/* <https://github.com/HathawayJA/godevin/tree/master/modules/gdscript>`__.
+   Scripts are compiled to bytecode by
+   `gdscript_compiler.cpp <https://github.com/HathawayJA/godevin/blob/master/modules/gdscript/gdscript_compiler.cpp>`__
+   and executed by a stack-based virtual machine in
+   `gdscript_vm.cpp <https://github.com/HathawayJA/godevin/blob/master/modules/gdscript/gdscript_vm.cpp>`__.
+   When you add type hints, the compiler can emit optimized typed instructions that
+   skip the ``Variant`` dispatch path, which is why typed GDScript runs faster.
+
 .. note::
 
     Why don't we use Python or Lua directly?
@@ -132,6 +144,17 @@ officially supported .NET option.
     experimental and :ref:`some limitations apply <doc_c_sharp_platforms>`.
 
 .. seealso:: To learn more about C#, head to the :ref:`doc_c_sharp` section.
+
+.. admonition:: Engine context
+   :class: devin-context
+
+   C# integration is built on .NET and lives in
+   `/modules/mono/* <https://github.com/HathawayJA/godevin/tree/master/modules/mono>`__.
+   The glue layer that maps Godot classes to C# is generated at build time by
+   `editor/bindings_generator.cpp <https://github.com/HathawayJA/godevin/blob/master/editor/bindings_generator.cpp>`__.
+   Marshalling between the engine's ``Variant`` type system and .NET managed
+   objects happens in
+   `modules/mono/glue/ <https://github.com/HathawayJA/godevin/tree/master/modules/mono/glue>`__.
 
 C++ via GDExtension
 ~~~~~~~~~~~~~~~~~~~

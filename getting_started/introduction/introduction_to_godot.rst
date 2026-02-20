@@ -23,6 +23,17 @@ programming skills or a developer to port the game for you.
 
 .. note:: For information about console support, see the `Godot website <https://godotengine.org/consoles/>`_.
 
+.. admonition:: Engine context
+   :class: devin-context
+
+   Godot's platform abstraction lives in the
+   `/platform/* <https://github.com/HathawayJA/godevin/tree/master/platform>`__
+   directory, with dedicated backends for Android, iOS, Linux/BSD, macOS, visionOS,
+   Web, and Windows. Each platform folder contains the OS-specific entry point
+   and display server implementation. Platform-agnostic drivers (graphics, audio,
+   input) are in
+   `/drivers/* <https://github.com/HathawayJA/godevin/tree/master/drivers>`__.
+
 What can the engine do?
 -----------------------
 
@@ -69,6 +80,18 @@ The team strives to offer a feature-rich game editor with a consistent user
 experience. While there is always room for improvement, the user interface keeps
 getting refined.
 
+.. admonition:: Engine context
+   :class: devin-context
+
+   The editor itself is built using Godot's own UI framework. Its source lives in
+   `/editor/* <https://github.com/HathawayJA/godevin/tree/master/editor>`__,
+   with the main entry point at
+   `editor/editor_node.cpp <https://github.com/HathawayJA/godevin/blob/master/editor/editor_node.cpp>`__.
+   Editor plugins, docks, and inspectors are organized into subdirectories such as
+   ``editor/plugins/``, ``editor/docks/``, and ``editor/inspector/``. The editor
+   is compiled conditionally via the ``TOOLS_ENABLED`` preprocessor flag, meaning
+   exported games never include editor code.
+
 Of course, if you prefer, you can work with external programs. We officially
 support importing 3D scenes designed in Blender_ and maintain plugins to code in
 VSCode_ and Emacs_ for GDScript and C#. We also support Visual Studio for C# on
@@ -94,6 +117,19 @@ Software Development Kits (SDK) in the engine.
 
 Of course, you can also directly add modules and features to the engine, as it's
 completely free and open source.
+
+.. admonition:: Engine context
+   :class: devin-context
+
+   GDScript is implemented as an engine module at
+   `/modules/gdscript/* <https://github.com/HathawayJA/godevin/tree/master/modules/gdscript>`__.
+   C# support lives in
+   `/modules/mono/* <https://github.com/HathawayJA/godevin/tree/master/modules/mono>`__.
+   GDExtension — the technology that enables C++ and other language bindings without
+   recompiling — is handled by the extension system in
+   `/core/extension/* <https://github.com/HathawayJA/godevin/tree/master/core/extension>`__.
+   All scripting languages register through the ``ScriptServer`` interface defined in
+   `core/object/script_language.h <https://github.com/HathawayJA/godevin/blob/master/core/object/script_language.h>`__.
 
 .. _doc_introduction_learning_programming:
 

@@ -18,6 +18,24 @@ module, and others. As many new modules as desired can be
 created and combined. The SCons build system will take care of it
 transparently.
 
+.. admonition:: Engine context
+   :class: devin-context
+
+   The module system is driven by SCons build scripts. Each module directory
+   must contain a ``config.py`` and an ``SCsub`` file. At build time, the
+   build system scans ``modules/`` (and any paths passed via
+   ``custom_modules``), calls each module's ``can_build()`` to check
+   platform compatibility, and generates
+   `modules/register_module_types.gen.cpp <https://github.com/HathawayJA/godevin/blob/master/modules/register_module_types.h>`__
+   which calls every module's ``initialize_*`` and ``uninitialize_*`` functions
+   during the engine lifecycle. You can see the full list of built-in modules
+   at `/modules/* <https://github.com/HathawayJA/godevin/tree/master/modules>`__.
+   The ``ClassDB::register_class<T>()`` call used in ``register_types.cpp``
+   is defined in
+   `core/object/class_db.h <https://github.com/HathawayJA/godevin/blob/master/core/object/class_db.h>`__
+   and records the class name, parent, methods, signals, and properties so
+   they become available to GDScript, C#, and the editor inspector.
+
 What for?
 ---------
 

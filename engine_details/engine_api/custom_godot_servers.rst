@@ -15,6 +15,21 @@ its RID allocations.
 This guide assumes the reader knows how to create C++ modules and Godot
 data types. If not, refer to :ref:`doc_custom_modules_in_cpp`.
 
+.. admonition:: Engine context
+   :class: devin-context
+
+   Built-in servers follow the same pattern shown below. For example,
+   ``RenderingServer`` is declared in
+   `servers/rendering_server.h <https://github.com/HathawayJA/godevin/blob/master/servers/rendering_server.h>`__
+   and its concrete implementation lives in
+   `servers/rendering/rendering_server_default.h <https://github.com/HathawayJA/godevin/blob/master/servers/rendering/rendering_server_default.h>`__.
+   Each server owns its resources via ``RID_Owner`` and communicates with
+   the scene layer through a command queue
+   (`servers/rendering/rendering_server_default.cpp <https://github.com/HathawayJA/godevin/blob/master/servers/rendering/rendering_server_default.cpp>`__)
+   so that heavy work runs on a dedicated thread while the main thread
+   stays responsive. All servers are initialized during engine startup in
+   `main/main.cpp <https://github.com/HathawayJA/godevin/blob/master/main/main.cpp>`__.
+
 References
 ~~~~~~~~~~~
 
