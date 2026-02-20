@@ -174,6 +174,11 @@
     --admonition-tip-title-background-color: #1abc9c;
     --admonition-tip-title-color: #fff;
 
+    --admonition-devin-background-color: #f3e8ff;
+    --admonition-devin-color: #404040;
+    --admonition-devin-title-background-color: #8b5cf6;
+    --admonition-devin-title-color: #fff;
+
     --kbd-background-color: #fafbfc;
     --kbd-outline-color: #d1d5da;
     --kbd-shadow-color: #b0b7bf;
@@ -315,6 +320,11 @@
         --admonition-tip-color: #dfd;
         --admonition-tip-title-background-color: #336648;
         --admonition-tip-title-color: #dfd;
+
+        --admonition-devin-background-color: #2d2040;
+        --admonition-devin-color: #e9d5ff;
+        --admonition-devin-title-background-color: #6d28d9;
+        --admonition-devin-title-color: #e9d5ff;
 
         --kbd-background-color: #595b5d;
         --kbd-outline-color: #3d4144;
@@ -1967,4 +1977,27 @@ p + .classref-constant {
     margin: auto 2px;
     border: 0px solid #7fbbe3;
     background: var(--role-button-background-color);
+}
+
+/* Devin-added context admonition styling */
+.admonition.devin-context {
+    background-color: var(--admonition-devin-background-color);
+    color: var(--admonition-devin-color);
+}
+
+.admonition.devin-context > .admonition-title {
+    background-color: var(--admonition-devin-title-background-color);
+    color: var(--admonition-devin-title-color);
+}
+
+.admonition.devin-context > .admonition-title::before {
+    content: "";
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBmaWxsPSJ3aGl0ZSIgZD0iTTggMWE3IDcgMCAxIDAgMCAxNEE3IDcgMCAwIDAgOCAxem0wIDEyLjVhNS41IDUuNSAwIDEgMSAwLTExIDUuNSA1LjUgMCAwIDEgMCAxMXpNOCA0LjVhLjc1Ljc1IDAgMCAxIC43NS43NXYyLjVoMS41YS43NS43NSAwIDAgMSAwIDEuNWgtMi4yNWEuNzUuNzUgMCAwIDEtLjc1LS43NXYtMy4yNUEuNzUuNzUgMCAwIDEgOCA0LjV6Ii8+PC9zdmc+");
+    background-repeat: no-repeat;
+    background-size: 16px;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    vertical-align: text-bottom;
 }

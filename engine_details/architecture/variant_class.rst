@@ -48,6 +48,23 @@ References
 
 -  `core/variant/variant.h <https://github.com/godotengine/godot/blob/master/core/variant/variant.h>`__
 
+.. admonition:: Engine context
+   :class: devin-context
+
+   ``Variant`` is implemented as a tagged union in
+   `core/variant/variant.h <https://github.com/HathawayJA/godevin/blob/master/core/variant/variant.h>`__.
+   It stores a ``Type`` enum and a union of all possible value types. Small
+   types (bool, int, float, Vector2, etc.) are stored inline, while larger
+   types and reference-counted containers (Array, Dictionary) use heap-allocated
+   storage behind a shared reference count.
+   Arithmetic, comparison, and conversion operators are implemented in
+   `variant_op.cpp <https://github.com/HathawayJA/godevin/blob/master/core/variant/variant_op.cpp>`__
+   and
+   `variant_utility.cpp <https://github.com/HathawayJA/godevin/blob/master/core/variant/variant_utility.cpp>`__.
+   The GDScript VM dispatches most operations through ``Variant`` method calls,
+   which is why adding type hints (enabling typed instructions) can significantly
+   improve script performance.
+
 List of variant types
 ---------------------
 

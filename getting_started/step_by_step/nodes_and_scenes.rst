@@ -63,6 +63,18 @@ On top of acting like nodes, scenes have the following characteristics:
 3. You can create as many instances of a scene as you'd like. You could have
    five or ten characters in your game, created from your Character scene.
 
+.. admonition:: Engine context
+   :class: devin-context
+
+   Scenes are serialized as ``.tscn`` (text) or ``.scn`` (binary) resource files.
+   The ``SceneTree`` class in
+   `scene/main/scene_tree.cpp <https://github.com/HathawayJA/godevin/blob/master/scene/main/scene_tree.cpp>`__
+   owns the root ``Window`` node and drives the tree lifecycle — propagating
+   ``_ready()``, ``_process()``, and ``_physics_process()`` callbacks each frame.
+   Scene instantiation is handled by
+   `scene/resources/packed_scene.cpp <https://github.com/HathawayJA/godevin/blob/master/scene/resources/packed_scene.cpp>`__,
+   which reconstructs the node tree from its serialized form.
+
 Creating your first scene
 -------------------------
 

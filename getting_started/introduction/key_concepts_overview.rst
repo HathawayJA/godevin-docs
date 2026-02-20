@@ -59,6 +59,18 @@ things with these nodes.
 
 .. image:: img/key_concepts_node_menu.webp
 
+.. admonition:: Engine context
+   :class: devin-context
+
+   Every node inherits from the ``Node`` base class defined in
+   `scene/main/node.h <https://github.com/HathawayJA/godevin/blob/master/scene/main/node.h>`__.
+   Node provides the tree-management API (``add_child()``, ``remove_child()``,
+   ``get_parent()``) as well as the virtual callbacks ``_ready()``,
+   ``_process()``, and ``_physics_process()`` that drive game logic each frame.
+   The full node type hierarchy — 2D, 3D, Control, etc. — is registered at startup
+   through the ``ClassDB`` system in
+   `core/object/class_db.cpp <https://github.com/HathawayJA/godevin/blob/master/core/object/class_db.cpp>`__.
+
 The scene tree
 --------------
 
@@ -84,7 +96,18 @@ flexibility in how you structure your scenes.
           more about it here:
           https://gameprogrammingpatterns.com/observer.html
 
-For example, buttons emit a signal when pressed. You can connect a piece of code
+.. admonition:: Engine context
+   :class: devin-context
+
+   Signals are implemented at the ``Object`` level in
+   `core/object/object.h <https://github.com/HathawayJA/godevin/blob/master/core/object/object.h>`__.
+   When you call ``emit_signal()``, the engine iterates over a list of
+   ``Connection`` structs stored on the emitting object and invokes each
+   connected callable. This design keeps the signal system lightweight and
+   decoupled from any specific node type — even non-node ``Object`` subclasses
+   can emit and receive signals.
+
+For example, buttons emit a signal when pressed.You can connect a piece of code
 to this signal which will run in reaction to this event, like starting the game
 or opening a menu.
 
