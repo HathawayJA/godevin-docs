@@ -260,3 +260,58 @@ addon, or something else. In this scenario it's recommended that you open the
 project in recovery mode, and attempt to find and fix whatever is causing the
 crashes. See the :ref:`Project Manager page <doc_project_manager>` for more
 information.
+
+.. _doc_troubleshooting_known_issues:
+
+Known issues
+------------
+
+.. important::
+
+   The following issues are currently being tracked and may affect your workflow.
+   Workarounds are provided where available.
+
+Editor freezes or hangs during UI operations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are confirmed reports of the editor main thread becoming completely
+unresponsive during certain UI operations. This manifests as the editor window
+entering a "Not Responding" state that requires a force quit.
+
+Known triggers include:
+
+- **Selecting the Bucket Fill tool** in the TileMap/TileMapLayer 2D viewport
+  editor. The hang is caused by a high-frequency error loop when the tool is
+  activated (confirmed in 4.6.stable).
+- **Modifying font parameters** in a theme used by many Control nodes (e.g. a
+  FontVariation applied to a scene with thousands of labels). This is a
+  regression introduced in v4.6.dev4.
+
+**Workaround:** Save your work frequently. If the editor hangs, force quit and
+reopen the project. For the font parameter issue, consider applying font changes
+to smaller batches of nodes.
+
+See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/81>`__
+for full details and updates.
+
+Rendering pipeline crashes in 4.7 development builds
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Multiple crash reports have been filed against Godot 4.7 development builds
+where the rendering pipeline encounters null or invalid texture state. These
+crashes are **regressions not present in 4.6.stable**.
+
+Known triggers include:
+
+- **Entering playmode** in certain projects, producing errors such as
+  ``Parameter "tex" is null`` in the rendering device and
+  ``Unrecognized octmap format`` in the effects pipeline.
+- **Adding an OmniLight3D** to a scene that contains a SubViewport with a
+  Camera3D using a custom Environment resource.
+
+**Workaround:** If you encounter these crashes on 4.7 development builds,
+consider using 4.6.stable until the regressions are resolved. If you need to
+use 4.7.dev, avoid the specific scene configurations described above.
+
+See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/82>`__
+for full details and updates.
