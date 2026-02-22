@@ -1,0 +1,88 @@
+name: Devin on issue assignment
+on:
+  issues:
+    types: [assigned]
+
+# allow commenting on the issue
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-devin-session:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure jq is available
+        run: |
+          if ! command -v jq >/dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
+      - name: Build prompt file
+        run: |
+          cat > prompt.txt <<'EOF'
+          Triage this issue and aggregate all relevant context:
+          ${{ github.event.issue.html_url }}
+
+          Title: ${{ github.event.issue.title }}
+          Assigned to: ${{ github.event.assignee.login }}
+
+          Body:
+          ${{ github.event.issue.body }}
+
+          Follow the attached playbook to triage this issue, post a summary comment,
+          and ask whether the assignee wants you to implement a fix or set up a TODO branch.
+
+          REQUIREMENTS:
+          - When you open a PR, include this exact line in the PR description:
+            Fixes ${{ github.repository }}#${{ github.event.issue.number }}
+          - For every commit message in that PR, include:
+            Refs ${{ github.repository }}#${{ github.event.issue.number }}
+          EOF
+
+      - name: Create Devin session
+        id: devin
+        env:
+          DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
+        run: |
+          set -eo pipefail
+
+          resp=$(curl -fSs https://api.devin.ai/v1/sessions \
+            -H "Authorization: Bearer $DEVIN_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --rawfile prompt prompt.txt \
+                  --arg title "Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}" \
+                  --arg repo "${{ github.repository }}" \
+                  --arg issue "${{ github.event.issue.number }}" \
+                  --arg playbook "playbook-97c647cb871644f594d96254b0d4cd49" \
+                  '{prompt:$prompt, title:$title, idempotent:true,
+                    playbook_id:$playbook,
+                    tags:["src:github","assigned","repo:"+$repo,"issue:"+$issue]}')" )
+
+          echo "$resp" > resp.json
+
+          # required outputs (fail if url missing)
+          url=$(jq -er '.url' resp.json)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+          session_id=$(jq -r '.session_id' resp.json)
+          echo "session_id=$session_id" >> "$GITHUB_OUTPUT"
+
+          is_new=$(jq -r '.is_new_session // true' resp.json)
+          echo "is_new_session=$is_new" >> "$GITHUB_OUTPUT"
+
+      - name: Comment on the issue with session link (newline-safe)
+        if: ${{ steps.devin.outputs.url != '' && steps.devin.outputs.is_new_session == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          jq -n \
+            --arg url "${{ steps.devin.outputs.url }}" \
+            '{body: "🤖 Devin is triaging this issue.\n\n**Session:** \($url)\n\nI will post a summary with a proposed fix shortly and ask if you would like me to implement it."}' > body.json
+
+          curl -sS -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            --data @body.json \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments"
