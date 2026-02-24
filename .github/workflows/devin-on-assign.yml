@@ -52,7 +52,15 @@ jobs:
           and ask whether the assignee wants you to implement a fix or set up a TODO branch.
 
           REQUIREMENTS:
-          - When you open a PR, include this exact line in the PR description:
+          - Perform root cause analysis: identify the relevant RST files, sections, and cross-references.
+          - Search for related issues, PRs, and recent commits that may be connected.
+          - Post your triage findings as a comment on the issue, including:
+            * Root cause analysis with specific file and section references
+            * Relevant RST files and line numbers
+            * Proposed fix approach
+          - End the comment by asking: Would you like me to implement this fix? Reply yes to proceed or no for a TODO branch.
+          - Do NOT implement any code changes. Only triage and comment.
+          - When you eventually open a PR (in a future session), include this exact line in the PR description:
             Fixes \($repo)#\($issue)
           - For every commit message in that PR, include:
             Refs \($repo)#\($issue)"' > prompt.txt
@@ -77,6 +85,7 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
+          PLAYBOOK_ID: ${{ secrets.DEVIN_TRIAGE_PLAYBOOK_ID }}
         run: |
           set -eo pipefail
 
@@ -87,7 +96,7 @@ jobs:
                   --arg title "Issue #${ISSUE_NUMBER}: ${ISSUE_TITLE}" \
                   --arg repo "$REPO" \
                   --arg issue "$ISSUE_NUMBER" \
-                  --arg playbook "playbook-97c647cb871644f594d96254b0d4cd49" \
+                  --arg playbook "$PLAYBOOK_ID" \
                   '{prompt:$prompt, title:$title, idempotent:true,
                     playbook_id:$playbook,
                     tags:["src:github","assigned","repo:"+$repo,"issue:"+$issue]}')" )
