@@ -1,0 +1,150 @@
+name: Devin respond to triage comment
+on:
+  issue_comment:
+    types: [created]
+
+# allow commenting on the issue, creating branches and pushing code
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: devin-respond-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  create-devin-response-session:
+    # Only trigger when:
+    # 1. The issue has the "devin" label (triage was performed)
+    # 2. The commenter is not a bot (ignore Devin's own comments and other bots)
+    # 3. This is on an issue, not a PR
+    if: >-
+      contains(github.event.issue.labels.*.name, 'devin') &&
+      github.event.comment.user.type != 'Bot' &&
+      !github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure jq is available
+        run: |
+          if ! command -v jq >/dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+
+      - name: Check for prior triage comment from Devin
+        id: check_triage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          # Fetch issue comments and look for a Devin triage comment
+          comments=$(curl -fSs \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${REPO}/issues/${ISSUE_NUMBER}/comments?per_page=100")
+
+          # Check if any comment from devin-ai-integration[bot] contains the triage prompt
+          has_triage=$(echo "$comments" | jq '[.[] | select(
+            (.user.login == "devin-ai-integration[bot]") and
+            ((.body | test("Would you like me to implement this fix"; "i")) or
+             (.body | test("Reply.*yes.*to proceed"; "i")) or
+             (.body | test("TODO"; "i")))
+          )] | length > 0')
+
+          echo "has_triage=$has_triage" >> "$GITHUB_OUTPUT"
+
+      - name: Build prompt file
+        if: ${{ steps.check_triage.outputs.has_triage == 'true' }}
+        env:
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_USER: ${{ github.event.comment.user.login }}
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          jq -n -r \
+            --arg url "$ISSUE_URL" \
+            --arg title "$ISSUE_TITLE" \
+            --arg body "$ISSUE_BODY" \
+            --arg comment "$COMMENT_BODY" \
+            --arg user "$COMMENT_USER" \
+            --arg repo "$REPO" \
+            --arg issue "$ISSUE_NUMBER" \
+            '"A user has responded to the triage report on this issue:
+          \($url)
+
+          Title: \($title)
+
+          Issue body:
+          \($body)
+
+          User \($user) commented:
+          \($comment)
+
+          Follow the attached playbook to determine the user intent and take the appropriate action:
+          - If the user says yes or wants the fix implemented: implement the fix and open a PR.
+          - If the user says no or wants a TODO branch: create a branch with TODO comments and comment the branch name on the issue. Do NOT create a PR for the TODO branch.
+
+          REQUIREMENTS:
+          - Read all comments on the issue to find the triage report with root cause analysis and proposed fix.
+          - When you open a PR (fix path only), include this exact line in the PR description:
+            Fixes \($repo)#\($issue)
+          - For every commit message, include:
+            Refs \($repo)#\($issue)
+          - For TODO path: push the branch and comment the branch name. Do NOT open a PR."' > prompt.txt
+
+      - name: Create Devin session
+        if: ${{ steps.check_triage.outputs.has_triage == 'true' }}
+        id: devin
+        env:
+          DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          PLAYBOOK_ID: ${{ secrets.DEVIN_RESPONSE_PLAYBOOK_ID }}
+        run: |
+          set -eo pipefail
+
+          resp=$(curl -fSs https://api.devin.ai/v1/sessions \
+            -H "Authorization: Bearer $DEVIN_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --rawfile prompt prompt.txt \
+                  --arg title "Respond to Issue #${ISSUE_NUMBER}: ${ISSUE_TITLE}" \
+                  --arg repo "$REPO" \
+                  --arg issue "$ISSUE_NUMBER" \
+                  --arg playbook "$PLAYBOOK_ID" \
+                  '{prompt:$prompt, title:$title, idempotent:false,
+                    playbook_id:$playbook,
+                    tags:["src:github","response","repo:"+$repo,"issue:"+$issue]}')" )
+
+          echo "$resp" > resp.json
+
+          url=$(jq -er '.url' resp.json)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+          session_id=$(jq -r '.session_id' resp.json)
+          echo "session_id=$session_id" >> "$GITHUB_OUTPUT"
+
+      - name: Comment on the issue with session link
+        if: ${{ steps.check_triage.outputs.has_triage == 'true' && steps.devin.outputs.url != '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SESSION_URL: ${{ steps.devin.outputs.url }}
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          jq -n \
+            --arg url "$SESSION_URL" \
+            '{body: "🤖 Devin is processing your response.\n\n**Session:** \($url)"}' > body.json
+
+          curl -fSs -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            --data @body.json \
+            "https://api.github.com/repos/${REPO}/issues/${ISSUE_NUMBER}/comments"

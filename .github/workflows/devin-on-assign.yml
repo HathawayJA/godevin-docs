@@ -1,19 +1,19 @@
-name: Devin on issue assignment
+name: Devin triage on issue assignment
 on:
   issues:
     types: [assigned]
 
-# allow commenting on the issue
+# allow commenting on the issue and adding labels
 permissions:
   contents: read
   issues: write
 
 concurrency:
-  group: devin-issue-${{ github.event.issue.number }}
+  group: devin-triage-${{ github.event.issue.number }}
   cancel-in-progress: true
 
 jobs:
-  create-devin-session:
+  create-devin-triage-session:
     if: ${{ github.event.assignee.login == 'devin-ai-integration[bot]' }}
     runs-on: ubuntu-latest
     steps:
@@ -52,7 +52,10 @@ jobs:
           and ask whether the assignee wants you to implement a fix or set up a TODO branch.
 
           REQUIREMENTS:
-          - When you open a PR, include this exact line in the PR description:
+          - Post your triage findings as a comment on the issue.
+          - End the comment by asking: Would you like me to implement this fix? Reply yes to proceed or no for a TODO branch.
+          - Do NOT implement any code changes. Only triage and comment.
+          - When you eventually open a PR (in a future session), include this exact line in the PR description:
             Fixes \($repo)#\($issue)
           - For every commit message in that PR, include:
             Refs \($repo)#\($issue)"' > prompt.txt
@@ -77,6 +80,7 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
+          PLAYBOOK_ID: ${{ secrets.DEVIN_TRIAGE_PLAYBOOK_ID }}
         run: |
           set -eo pipefail
 
@@ -84,13 +88,13 @@ jobs:
             -H "Authorization: Bearer $DEVIN_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$(jq -n --rawfile prompt prompt.txt \
-                  --arg title "Issue #${ISSUE_NUMBER}: ${ISSUE_TITLE}" \
+                  --arg title "Triage Issue #${ISSUE_NUMBER}: ${ISSUE_TITLE}" \
                   --arg repo "$REPO" \
                   --arg issue "$ISSUE_NUMBER" \
-                  --arg playbook "playbook-97c647cb871644f594d96254b0d4cd49" \
+                  --arg playbook "$PLAYBOOK_ID" \
                   '{prompt:$prompt, title:$title, idempotent:true,
                     playbook_id:$playbook,
-                    tags:["src:github","assigned","repo:"+$repo,"issue:"+$issue]}')" )
+                    tags:["src:github","triage","assigned","repo:"+$repo,"issue:"+$issue]}')" )
 
           echo "$resp" > resp.json
 
