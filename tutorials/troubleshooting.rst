@@ -315,3 +315,28 @@ use 4.7.dev, avoid the specific scene configurations described above.
 
 See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/82>`__
 for full details and updates.
+
+Tile previews missing or incorrect in Scenes Collection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using scenes as tiles in a ``TileSet`` Scenes Collection source, tile
+previews may be missing or display incorrect content. This affects the
+``EditorResourcePreview`` pipeline used to generate scene-based tile thumbnails.
+
+Known triggers include:
+
+- **Copying a project folder** and opening the copy. All tile previews in
+  Scenes Collection sources will be missing because the preview cache from the
+  original project is not valid in the copy.
+- **Re-saving tile scenes** while the Script editor (or any workspace other
+  than the 2D workspace) is active. The regenerated preview incorrectly
+  captures the last scene shown in the 2D workspace instead of the tile scene
+  being saved.
+
+**Workaround:** To regenerate correct tile previews, switch to the **2D
+workspace** first, then open each tile scene and re-save it. The preview will
+only capture the correct content when the 2D workspace is active during the
+save.
+
+See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/88>`__
+for full details and updates.
