@@ -298,8 +298,9 @@ Rendering pipeline crashes in 4.7 development builds
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Multiple crash reports have been filed against Godot 4.7 development builds
-where the rendering pipeline encounters null or invalid texture state. These
-crashes are **regressions not present in 4.6.stable**.
+where the rendering pipeline encounters null or invalid texture state in
+``rendering_device.cpp``. These crashes are **regressions not present in
+4.6.stable** and only affect the **Forward+** renderer.
 
 Known triggers include:
 
@@ -308,10 +309,15 @@ Known triggers include:
   ``Unrecognized octmap format`` in the effects pipeline.
 - **Adding an OmniLight3D** to a scene that contains a SubViewport with a
   Camera3D using a custom Environment resource.
+- **Expanding Material Overrides** in the inspector for certain node types
+  (e.g. VoxelCube from godot_voxel). The crash path goes through
+  ``_texture_initialize`` and ``texture_create`` during font glyph rendering.
 
 **Workaround:** If you encounter these crashes on 4.7 development builds,
 consider using 4.6.stable until the regressions are resolved. If you need to
-use 4.7.dev, avoid the specific scene configurations described above.
+use 4.7.dev, avoid the specific scene configurations described above. For the
+Material Overrides crash, switching from Forward+ to the Mobile renderer
+prevents the crash.
 
 See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/82>`__
 for full details and updates.
@@ -339,4 +345,30 @@ only capture the correct content when the 2D workspace is active during the
 save.
 
 See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/88>`__
+for full details and updates.
+
+Embedded game window fails to fully pause or stop game execution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The embedded game window introduced in Godot 4.4 has known issues where
+pause and close operations do not fully halt game execution. The suspend
+mechanism pauses the ``SceneTree`` but does not stop all running code paths.
+
+Known triggers include:
+
+- **Pausing the embedded game window** (F9) while ``await`` coroutines are
+  running. Coroutines awaiting ``get_tree().process_frame`` continue executing
+  despite the game being suspended, making frame-by-frame debugging unreliable.
+- **Closing the embedded game test window** using the built-in close button.
+  The game viewport continues running in the background and can only be
+  terminated via the editor's stop button. This is a regression not present in
+  4.4.1.
+
+**Workaround:** For the coroutine issue, use
+``await get_tree().create_timer(0.05).timeout`` instead of
+``await get_tree().process_frame`` as the timer creation is paused by the
+suspend mechanism. For the close issue, always use the editor's **Stop** button
+(F8) instead of the window's close button to terminate the running project.
+
+See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/97>`__
 for full details and updates.
