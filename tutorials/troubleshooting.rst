@@ -340,3 +340,56 @@ save.
 
 See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/88>`__
 for full details and updates.
+
+Embedded game window does not fully stop game on pause or close
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using the embedded game window in the editor, the game may continue
+running partially or fully after the user expects it to have stopped. The
+pause/close signals do not correctly propagate to halt all game execution.
+
+Known triggers include:
+
+- **Using the suspend/pause button** on the embedded game window while the
+  game uses ``await get_tree().process_frame`` coroutines. The pause only
+  stops ``_process()`` and ``_physics_process()`` callbacks but does not
+  halt coroutines awaiting signals like ``process_frame``.
+- **Closing the running project window** using the built-in close button in
+  the test window. The game viewport continues to exist and can only be
+  exited through the editor's terminate button. This is a regression
+  introduced in 4.6.1.
+
+**Workaround:** Use the editor's **Stop** button (or press :kbd:`F8`) to
+fully terminate the running project instead of closing the embedded game
+window directly. For coroutine-based game logic, be aware that
+``await``-based loops will continue running during pause.
+
+See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/97>`__
+for full details and updates.
+
+XR depth buffer rendering issues with Forward+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using OpenXR with the Forward+ renderer, depth buffer dependent
+features may produce incorrect results. The depth texture pipeline between
+the OpenXR module and the rendering device does not correctly handle all
+usage scenarios.
+
+Known triggers include:
+
+- **Enabling "Submit Depth Buffer"** with MSAA enabled on a Forward+
+  viewport. The submitted depth texture is always zeroed because the OpenXR
+  module creates depth swapchains without the ``STORAGE`` usage flag
+  required by Forward+'s MSAA compute resolve shaders.
+- **Using VoxelGI in XR scenes** on any Godot version since 4.3-dev6. The
+  reversed depth buffer introduced in that version is not accounted for by
+  the VoxelGI lighting pass when operating on XR viewports, causing VoxelGI
+  to have almost no visible effect.
+
+**Workaround:** For depth submission, disable MSAA on the XR viewport or
+use the Mobile renderer instead of Forward+. For VoxelGI in XR, use Godot
+4.3-dev5 or earlier, or use alternative global illumination methods such as
+``LightmapGI``.
+
+See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/98>`__
+for full details and updates.
