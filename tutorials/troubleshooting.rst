@@ -340,3 +340,56 @@ save.
 
 See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/88>`__
 for full details and updates.
+
+Forward+ renderer lighting artifacts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are reports of incorrect lighting intensity in scenes using the
+**Forward+** renderer (Vulkan or D3D12). The artifacts involve indirect light
+sources -- reflection probes and lightmaps -- producing incorrect brightness
+levels or failing to incorporate ambient light contributions.
+
+Known triggers include:
+
+- **Using a ReflectionProbe** near metallic curved surfaces. Specular
+  reflections on reflected objects appear extremely bright (brighter than
+  direct sunlight) and cause flickering artifacts. This worsened between
+  4.5.1 and 4.6.
+- **Baking LightmapGI** with the environment ambient light source set to
+  ``Color``. The baked lightmap ignores the ambient color and appears to
+  default to sky lighting, producing significantly darker results than
+  expected.
+
+**Workaround:** For the ReflectionProbe brightness issue, reduce the
+``intensity`` property on the probe or avoid highly metallic curved surfaces
+near it. For the LightmapGI ambient light issue, set the lightmap's
+**Environment Mode** to ``Custom Color`` and specify the intended ambient color
+directly instead of relying on the scene environment setting.
+
+See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/99>`__
+for full details and updates.
+
+Editor layout and panel size regressions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Editor panels and dock slots may lose their expected dimensions after a
+restart or when toggling distraction-free mode. This is a regression in the
+4.6/4.7 development cycle affecting the editor layout save/restore logic.
+
+Known triggers include:
+
+- **Opening the script or shader editor** on current 4.7 development builds.
+  After the dock refactor introduced in ``godotengine/godot#114917``, these
+  editors may be rendered at extremely small (nearly invisible) sizes.
+- **Closing the editor with distraction-free mode enabled** and reopening it.
+  Side dock slots reset to their minimum width instead of restoring the
+  original width from before distraction-free mode was activated (regression
+  from 4.5 to 4.6).
+
+**Workaround:** If script/shader editors appear minimized, manually drag the
+panel dividers to resize them. For the dock width reset, disable
+distraction-free mode before closing the editor so that the correct dock
+dimensions are saved to the editor layout.
+
+See the `consolidated tracking issue <https://github.com/HathawayJA/godevin/issues/100>`__
+for full details and updates.
